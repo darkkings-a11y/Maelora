@@ -10,24 +10,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Décompresser le zip
+      - name: Décompresser les zips éventuels
         run: |
-          if [ -f marlora.zip ]; then
-            rm -rf src_zip && mkdir src_zip
-            unzip -q maelora.zip -d src_zip
-            if [ "$(ls -1 src_zip | wc -l)" = "1" ] && [ -d "src_zip/$(ls -1 src_zip)" ]; then
-              echo "PROJECT_DIR=src_zip/$(ls -1 src_zip)" >> $GITHUB_ENV
-            else
-              echo "PROJECT_DIR=src_zip" >> $GITHUB_ENV
-            fi
-          else
-            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          for z in *.zip; do
+            [ -f "$z" ] && unzip -q -o "$z" -d "unzipped_${z%.zip}"
+          done || true
+
+      - name: Trouver la racine du projet Gradle
+        run: |
+          SETTINGS=$(find . -name 'settings.gradle*' -not -path '*/node_modules/*' | head -n 1)
+          if [ -z "$SETTINGS" ]; then
+            echo "Aucun settings.gradle trouvé. Contenu du dépôt :"
+            find . -maxdepth 3 -not -path './.git/*'
+            exit 1
           fi
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> $GITHUB_ENV
+          echo "Projet trouvé dans : $(dirname "$SETTINGS")"
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+
+      - uses: android-actions/setup-android@v3
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -39,5 +44,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Maelora-apk
+          name: maelora-apk
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
