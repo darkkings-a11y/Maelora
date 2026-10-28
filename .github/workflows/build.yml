@@ -38,7 +38,22 @@ jobs:
 
       - name: Compiler l'APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle assembleDebug --no-daemon
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --console=plain --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+      - name: Afficher les erreurs de compilation
+        if: failure()
+        run: |
+          echo "===== Erreurs Kotlin / Gradle ====="
+          grep -E '^e: |error:|Unresolved|What went wrong' -A2 "$GITHUB_WORKSPACE/build.log" | head -80 || true
+          grep -E '^e: ' "$GITHUB_WORKSPACE/build.log" | head -20 | while read -r l; do echo "::error::$l"; done || true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: build.log
 
       - uses: actions/upload-artifact@v4
         with:
