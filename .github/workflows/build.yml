@@ -1,0 +1,43 @@
+name: Build Marlora APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Décompresser le zip
+        run: |
+          if [ -f marlora.zip ]; then
+            rm -rf src_zip && mkdir src_zip
+            unzip -q marlora.zip -d src_zip
+            if [ "$(ls -1 src_zip | wc -l)" = "1" ] && [ -d "src_zip/$(ls -1 src_zip)" ]; then
+              echo "PROJECT_DIR=src_zip/$(ls -1 src_zip)" >> $GITHUB_ENV
+            else
+              echo "PROJECT_DIR=src_zip" >> $GITHUB_ENV
+            fi
+          else
+            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Compiler l'APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marlora-apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
