@@ -1,4 +1,4 @@
-name: Build Marlora APK
+name: Build Maelora APK
 on:
   push:
     branches: [main]
@@ -14,7 +14,7 @@ jobs:
         run: |
           if [ -f marlora.zip ]; then
             rm -rf src_zip && mkdir src_zip
-            unzip -q marlora.zip -d src_zip
+            unzip -q maelora.zip -d src_zip
             if [ "$(ls -1 src_zip | wc -l)" = "1" ] && [ -d "src_zip/$(ls -1 src_zip)" ]; then
               echo "PROJECT_DIR=src_zip/$(ls -1 src_zip)" >> $GITHUB_ENV
             else
@@ -39,5 +39,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: marlora-apk
+          name: Maelora-apk
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
