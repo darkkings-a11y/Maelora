@@ -10,10 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Décompresser les zips éventuels
+      - name: Décompresser les zips éventuels (tous au même endroit)
         run: |
+          mkdir -p unzipped
           for z in *.zip; do
-            [ -f "$z" ] && unzip -q -o "$z" -d "unzipped_${z%.zip}"
+            [ -f "$z" ] && unzip -q -o "$z" -d unzipped
           done || true
 
       - name: Trouver la racine du projet Gradle
